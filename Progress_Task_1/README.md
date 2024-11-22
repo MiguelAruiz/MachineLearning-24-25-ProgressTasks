@@ -17,24 +17,24 @@ pip install -r requirements.txt
 
 ## Structure
 
-```bash
-.
-├── Classification_models.ipynb
-├── Preprocessing.ipynb
-├── README.md
-├── Regression_models.ipynb
-├── img_classification
-│   ├── DecisionTree.png
-│   ├── GaussianNB.png
-│   ├── MultinomialNB.png
-│   ├── RandomForest.png
-│   └── kNN.png
-├── img_regression
-│   ├── Multilinear Lasso.png
-│   ├── Multilinear Ridge.png
-│   ├── Polynomial Regression.png
-│   └── Random Forest.png
-└── requirements.txt
+```
+📂 .    
+    ├──── 📄 Classification_models.ipynb    
+    ├──── 📄 Preprocessing.ipynb  
+    ├──── 📄 README.md  
+    ├──── 📄 Regression_models.ipynb  
+    ├──── 📂 img_classification  
+    │      ├── 🖼️ DecisionTree.png  
+    │      ├── 🖼️ GaussianNB.png  
+    │      ├── 🖼️ MultinomialNB.png  
+    │      ├── 🖼️ RandomForest.png  
+    │      └── 🖼️ kNN.png  
+    ├──── 📂 img_regression  
+    │      ├── 🖼️ Multilinear Lasso.png  
+    │      ├── 🖼️ Multilinear Ridge.png  
+    │      ├── 🖼️ Polynomial Regression.png  
+    │      └── 🖼️ Random Forest.png  
+    └──── 📄 requirements.txt  
 ```
 
 * **Classification_models.ipynb**: Jupyter notebook with the classification models.
