@@ -1,5 +1,11 @@
 @echo off
 
+rem Remove the file mlflow/predictions.csv if it exists
+if exist mlflow/predictions.csv del mlflow/predictions.csv
+
+rem Install Dependencies
+pip install -r requirements.txt
+
 rem Inicia el servidor MLflow en el puerto 8080
 start cmd "mlflow server --port 8080"
 
