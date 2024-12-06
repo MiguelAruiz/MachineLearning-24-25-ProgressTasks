@@ -23,21 +23,33 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.multioutput import MultiOutputClassifier
 import logging
 import configparser
+import os
 #########################################################################################
 
 
 ################################## Global Configurations ################################
 # Load configuration file
-CONFIG_FILE_PATH = "test.conf"
+CONFIG_FILE_PATH = "mlflow/test.conf"
 
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE_PATH)
 
+CONFIG_SECTION_MLFLOW = "mlflow"
+CONFIG_SECTION_NAMES = "names"
+CONFIG_SECTION_DATA = "data"
+CONFIG_PARAM_MLFLOW_ADDRESS = "mflow_address"
+CONFIG_PARAM_MFLWOW_PORT = "mlflow_port"
+CONFIG_PARAM_EXPERIMENT_NAME = "mlflow_experiment_name"
+MLFLOW_LOCATION = config[CONFIG_SECTION_MLFLOW][CONFIG_PARAM_MLFLOW_ADDRESS] + config[CONFIG_SECTION_MLFLOW][CONFIG_PARAM_MFLWOW_PORT]
+OPTIMIZED_SUFFIX = config[CONFIG_SECTION_NAMES]["model_optimized"]
+ROC_AUC_NAME = config[CONFIG_SECTION_NAMES]["parameter_roc_auc"]
+ACCURACY_NAME = config[CONFIG_SECTION_NAMES]["parameter_accuracy"]
+OUTPUT_FILE_PATH = config[CONFIG_SECTION_DATA]["output_path"]
+
 # Load logging configuration
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 #########################################################################################
-
 
 # TODO: This method only works for RandomForestClassifier in Grid Search. Maybe it should work with any model
 def hyperparameters(model_to_train):
@@ -48,7 +60,7 @@ def hyperparameters(model_to_train):
     
     :param model_to_train: The model to train.
     
-    :return model: The model, now built with 
+    :return model: The model, now built with fine-tuned hyperparameters.
     
     '''
     
@@ -63,7 +75,7 @@ def hyperparameters(model_to_train):
     tuner_logger.info("Hyperparameters optimized. Building model...")
     model = RandomizedSearchCV(estimator=model_to_train, param_distributions=param_dist_random,
                                     n_iter=50, cv=5, n_jobs=-1, verbose=0,
-                                    scoring='roc_auc')
+                                    scoring= ROC_AUC_NAME)
     tuner_logger.info("Model built successfully!")
     
     return model
@@ -107,7 +119,7 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
         mlflow.log_input(pd_dataset, "training")
                
         # Tune the hyperparameters of the model (if needed. Only for optimized models) and log them
-        if model_name.endswith("si_opt"):
+        if model_name.endswith(OPTIMIZED_SUFFIX):
             run_logger.info(f"Model {model_name} is optimized. Tuning hyperparameters...")
             model = hyperparameters(model)
         mlflow.log_params(model.get_params())           
@@ -134,11 +146,10 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
 
 
         ################################## Result logs ##################################
-        mlflow.log_metric("roc_auc", float(roc_auc))
-        mlflow.log_metric("accuracy", float(accuracy))
-
-        ''' This is not used! What is this for?
         
+        # Log the model's metrics and information to MLflow
+        mlflow.log_metric(ROC_AUC_NAME, float(roc_auc))
+        mlflow.log_metric(ACCURACY_NAME, float(accuracy))
         model_info = mlflow.sklearn.log_model(
             sk_model=model,
             artifact_path="model",
@@ -147,10 +158,9 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
             registered_model_name=model_name,
         )
         
-        '''
+        run_logger.info(f"Model {model_name} logged successfully on MLflow.") # I infer the model_info was for this...
         
-        run_logger.info(f"Model {model_name} saved successfully on MLflow.") # I infer the model_info was for this...
-        
+        # Predict probabilities for the output data
         predictions = model.predict_proba(output)
         
         h1n1_probs = predictions[0][:, 1]  # Probabilidades de clase positiva para h1n1_vaccine
@@ -161,16 +171,22 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
             "h1n1_vaccine": h1n1_probs,
             "seasonal_vaccine": seasonal_probs
         })
+        
+        # The predictions are indexed by their value of respondent_id
         predict.set_index("respondent_id", inplace=True)
-        predict.to_csv("predictions.csv") 
-        mlflow.log_artifact("predictions.csv")
-        logging.info("predictions saved")
+        
+        ################################## Final logs ##################################
+        
+        # Store the predictions in a file and log them to MLflow
+        predict.to_csv(OUTPUT_FILE_PATH) 
+        mlflow.log_artifact(OUTPUT_FILE_PATH)
+        run_logger.info("predictions saved")
 
 
 def main():
     # Set our tracking server uri for logging
-    mlflow.set_tracking_uri(uri="http://127.0.0.1:8080")
-    experiment_name = "Whole dataset + correlation"
+    mlflow.set_tracking_uri(uri=MLFLOW_LOCATION)
+    experiment_name = CONFIG_PARAM_EXPERIMENT_NAME
     if not mlflow.get_experiment_by_name(experiment_name):
         mlflow.create_experiment(experiment_name)
     # Create a new MLflow Experiment
@@ -183,7 +199,9 @@ def main():
     # Split the data
     # models = {'RandomForest_no_opt': MultiOutputClassifier(RandomForestClassifier(n_estimators=100, random_state=42), n_jobs=-1), 
     #           'RandomForest_si_opt': MultiOutputClassifier(RandomForestClassifier(random_state=42), n_jobs=-1)}
-    models = {'RandomForest_si_opt': MultiOutputClassifier(RandomForestClassifier(), n_jobs=-1)}
+    models = {
+        f"{config[CONFIG_SECTION_NAMES]['randomforest_model_name']}{OPTIMIZED_SUFFIX}": MultiOutputClassifier(RandomForestClassifier(), n_jobs=-1)
+        }
 
     for model_name, model in models.items():
         logging.info(f"Starting run with {model_name}")
