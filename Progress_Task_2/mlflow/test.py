@@ -104,7 +104,7 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
     run_logger = logging.Logger("[Run]")
         
     # Split the dataset into train and testing
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
     # All this codeblock englobes the part of the run tracked by MLflow (Anything outside this block won't be tracked)
     with mlflow.start_run():
