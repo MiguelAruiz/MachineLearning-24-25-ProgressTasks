@@ -47,7 +47,11 @@ ACCURACY_NAME = config[CONFIG_SECTION_NAMES]["parameter_accuracy"]
 OUTPUT_FILE_PATH = config[CONFIG_SECTION_DATA]["output_path"]
 
 # Load logging configuration
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%H:%M:%S' 
+)
 
 #########################################################################################
 
