@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
 
 class Dataset:
     def __init__(self):
@@ -13,4 +14,16 @@ class Dataset:
     
     def with_correlation(self):
         return self._X.copy(), self._y.copy()
+    
+
+    def with_onehot(self):
+        encoder = OneHotEncoder()
+        all_features = pd.concat([self._X, self.test])
+        encoder.fit(all_features)
+        X = encoder.transform(self._X)
+        y = self._y
+        test_transformed = encoder.transform(self.test)
+        test_df = pd.DataFrame(test_transformed.toarray(), index=self.test.index)
+        return X, y, test_df
+    
     
