@@ -8,14 +8,14 @@ PARAMS = {
     # activation
     # "act": [relu_slope, "sigmoid"],
     # numbers of layers
-    "rs_num": [0.2,0.3,0.4],
+    "rs_num": [0.2, 0.3, 0.4],
     "nl1": [1, 2, 3],
     "nl2": [1, 2, 3],
     "nl3": [1, 2, 3],
     # neurons in each layer
-    "nn1": [14,15,16,17],
-    "nn2": [10,11,12],
-    "nn3": [6,7,8],
+    "nn1": [14, 15, 16, 17],
+    "nn2": [10, 11, 12],
+    "nn3": [6, 7, 8],
     # dropout and regularisation
     "dropout": [0, 0.1, 0.2, 0.3],
     "l1": [0, 0.01, 0.003, 0.001, 0.0001],
@@ -57,7 +57,7 @@ def create_model(
     """This is a model generating function so that we can search over neural net
     parameters and architecture"""
     act = lambda x: kr.activations.relu(x, negative_slope=rs_num)
-    
+
     reg = kr.regularizers.l1_l2(l1=l1, l2=l2)
 
     model = kr.models.Sequential()
@@ -102,6 +102,19 @@ def create_model(
 
 
 def gen_model(n_features: int, n_targets: int) -> KerasClassifier:
+    """
+    ## gen_model
+    Model generation function. It uses the create_model function, alongside a
+    KerasClassifier, in order to be able to create lots of instances of the
+    neural network when performing the random search.
+
+    Args:
+        n_features (int): Used to determine the shape of the keras model at the input layer
+        n_targets (int): Used to determine the shape of the model at the output layer
+
+    Returns:
+        kr.Model: The keras model, in this case KerasClassifier, from sklearn, to be used in the future for random search
+    """
     return KerasClassifier(
         build_fn=create_model,
         nl1=1,
@@ -113,7 +126,7 @@ def gen_model(n_features: int, n_targets: int) -> KerasClassifier:
         l1=0.01,
         l2=0.01,
         # act=relu_slope,
-        rs_num = 0.2,
+        rs_num=0.2,
         dropout=0,
         input_shape=1000,
         output_shape=20,

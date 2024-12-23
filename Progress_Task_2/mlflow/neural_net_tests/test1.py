@@ -2,19 +2,24 @@
 This test consists of a simple feedforward nn with 3 layers and a relu
 activation function with a small negative slope of 0.2
 """
-
-import logging
-from typing import Callable
 import keras as kr
-from sklearn.model_selection import train_test_split
-from create_dataset import (
-    Dataset,
-)  # FIXME this is just temporarily borrowing the dataset code from elena, this should be cleaner
 
 NAME: str = "nn_1"
 
 
 def gen_model(n_features: int, n_targets: int) -> kr.Model:
+    """
+    ## gen_model
+    Model generation function.
+
+    Args:
+        n_features (int): Used to determine the shape of the keras model at the input layer
+        n_targets (int): Used to determine the shape of the model at the output layer
+
+    Returns:
+        kr.Model: The keras model, in this case a neural network with 3 layers,
+        with 15,10 and 7 neurons in the layers
+    """
     relu_slope = lambda x: kr.activations.relu(x, negative_slope=0.2)
     nn_input = kr.Input(shape=(n_features,))
     x = kr.layers.Dense(15, activation=relu_slope)(nn_input)
@@ -30,12 +35,3 @@ def gen_model(n_features: int, n_targets: int) -> kr.Model:
         metrics=["accuracy", "auc"],
     )
     return nn_model
-
-
-# def test(X,y,model):
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-#     n_feat=len(X.columns)
-#     n_targ=len(y.columns)
-#     # model=gen_model(n_feat,n_targ)
-#     model.fit(,,epochs=10)
-#     logging.info("Model Trained") # TODO include model name

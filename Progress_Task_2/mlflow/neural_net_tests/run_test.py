@@ -1,6 +1,6 @@
 import logging
-import pickle
-from types import ModuleType
+from typing import Any, Callable
+from scikeras.wrappers import KerasClassifier
 from mlflow.models import infer_signature
 import keras as kr
 import mlflow
@@ -8,8 +8,6 @@ import mlflow.data.pandas_dataset
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
-    mean_absolute_error,
-    mean_squared_error,
     roc_auc_score,
     accuracy_score,
 )
@@ -18,6 +16,18 @@ from create_dataset import Dataset
 
 
 def play_model(model, model_name, X, y, output):
+    """
+    ## play_model
+    Run the mlflow test with the model, and data. This version is for a normal
+    keras model
+
+    Args:
+        model: The keras model tested here.
+        model_name (str): The name of the model
+        X: Training data
+        y: Training data
+        output: Test data
+    """
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42
     )
@@ -58,8 +68,12 @@ def play_model(model, model_name, X, y, output):
         predictions: np.ndarray = model.predict(output)
         predictions = predictions.transpose()
 
-        h1n1_probs = predictions[0][:]  # Probabilidades de clase positiva para h1n1_vaccine
-        seasonal_probs = predictions[1][:]  # Probabilidades de clase positiva para seasonal_vaccine
+        h1n1_probs = predictions[0][
+            :
+        ]  # Probabilidades de clase positiva para h1n1_vaccine
+        seasonal_probs = predictions[1][
+            :
+        ]  # Probabilidades de clase positiva para seasonal_vaccine
 
         predict = pd.DataFrame(
             {
@@ -75,6 +89,18 @@ def play_model(model, model_name, X, y, output):
 
 
 def play_model_search(model, model_name, X, y, output, param_d):
+    """
+    ## play_model
+    Run the mlflow test with the model, and data. This version is for random
+    search of a keras model
+
+    Args:
+        model: The keras model tested here.
+        model_name (str): The name of the model
+        X: Training data
+        y: Training data
+        output: Test data
+    """
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42
     )
@@ -83,7 +109,7 @@ def play_model_search(model, model_name, X, y, output, param_d):
             "input_shape": [X.shape[1]],
             "output_shape": [y.shape[1]],
         }
-        
+
         model = RandomizedSearchCV(
             estimator=model,
             param_distributions=param_d,
@@ -130,8 +156,10 @@ def play_model_search(model, model_name, X, y, output, param_d):
         predictions = model.predict_proba(output)
 
         predictions = predictions.transpose()
-        h1n1_probs = predictions[0][:]  # Probabilidades de clase positiva para h1n1_vaccine
-        seasonal_probs = predictions[1][:]  # Probabilidades de clase positiva para seasonal_vaccine
+        h1n1_probs = predictions[0][:]
+        # Probabilidades de clase positiva para h1n1_vaccine
+        seasonal_probs = predictions[1][:]
+        # Probabilidades de clase positiva para seasonal_vaccine
 
         predict = pd.DataFrame(
             {
@@ -146,10 +174,31 @@ def play_model_search(model, model_name, X, y, output, param_d):
         logging.info("predictions saved")
 
 
-def run_test(t: ModuleType, d: Dataset):
+def run_test(
+    d: Dataset,
+    NAME: str,
+    gen_model: Callable[[int, int], kr.Model | KerasClassifier],
+    PARAMS: dict[str, Any] | None = None,
+):
+    """
+    ## run_test
+    Used for running different types of tests for mlflow. It is intended for use
+    with keras models. It should be run automatically by __init__.py for all
+    test.py files created.
+
+    Args:
+        d (Dataset): Dataset class. Contains data to be used for the test
+        NAME (str): model name
+        gen_model (Callable[[int,int],kr.Model | KerasClassifier]): Model
+        generation model. Uses the dataset shape in order to automatically
+        generate the defined model
+        PARAMS (dict[str,Any] | None, optional): Only used when evaluating
+        RandomSearch, GridSearch, or similar. Defines the range of
+        hyperparameters used for optimizing. Defaults to None.
+    """
     X, y = d.with_correlation()
-    m: kr.Model = t.gen_model(len(X.columns), len(y.columns))
-    if not t.NAME.endswith("si_opt"):
-        play_model(m, t.NAME, X, y, d.test)
+    m: kr.Model = gen_model(len(X.columns), len(y.columns))
+    if not NAME.endswith("si_opt"):
+        play_model(m, NAME, X, y, d.test)
     else:
-        play_model_search(m, t.NAME, X, y, d.test, t.PARAMS)
+        play_model_search(m, NAME, X, y, d.test, PARAMS)

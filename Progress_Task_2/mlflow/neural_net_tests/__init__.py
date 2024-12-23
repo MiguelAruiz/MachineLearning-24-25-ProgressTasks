@@ -8,9 +8,6 @@ import test2
 from create_dataset import Dataset
 from run_test import run_test
 
-tests: list[ModuleType] = [ test2]
-
-
 def main(argv: list[str] = []):
     # FIXME duplicated code with Progress_Task_2/mlflow/test.py:89
     mlflow.set_tracking_uri(uri="http://127.0.0.1:8080")
@@ -19,12 +16,12 @@ def main(argv: list[str] = []):
         mlflow.create_experiment(experiment_name)
     # Create a new MLflow Experiment
     mlflow.set_experiment(experiment_name)
-    # FIXME PROBABLY BEST TO GET THIS IN A FUNCTION
     d = Dataset()
     print("Running Tests...")
-    for t in tests:
-        print(f"Running test {t}:")
-        run_test(t, d)
+    print(f"Running test 1 (NN Model):")
+    run_test(d,test1.NAME,test1.gen_model)
+    print(f"Running test 2 (NN Model with random search):")
+    run_test(d,test2.NAME,test2.gen_model)
     print("Run Finished.")
 
 
