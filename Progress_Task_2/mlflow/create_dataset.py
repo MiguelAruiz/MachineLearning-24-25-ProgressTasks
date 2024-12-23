@@ -26,4 +26,17 @@ class Dataset:
         test_df = pd.DataFrame(test_transformed.toarray(), index=self.test.index)
         return X, y, test_df
     
-    
+    def with_division(self):
+        h1_n1 = self._X.copy()
+        seasonal = self._X.copy()
+        h1_columns = ['doctor_recc_seasonal','opinion_seas_vacc_effective','opinion_seas_risk','opinion_seas_sick_from_vacc']
+        seasonal_columns = ['h1n1_concern','h1n1_knowledge','doctor_recc_h1n1','opinion_h1n1_vacc_effective','opinion_h1n1_risk','opinion_h1n1_sick_from_vacc']
+        h1_n1.drop(columns=h1_columns, inplace=True)
+        seasonal.drop(columns=seasonal_columns, inplace=True)
+        h1_n1_y = self._y['h1n1_vaccine']
+        seasonal_y = self._y['seasonal_vaccine']
+        test_h1_n1 = self.test.copy()
+        test_seasonal = self.test.copy()
+        test_h1_n1.drop(columns=h1_columns, inplace=True)
+        test_seasonal.drop(columns=seasonal_columns, inplace=True)
+        return (h1_n1, h1_n1_y, test_h1_n1), (seasonal, seasonal_y, test_seasonal)
