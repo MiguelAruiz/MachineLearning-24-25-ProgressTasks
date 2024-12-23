@@ -1,22 +1,68 @@
+
+
+######################################## IMPORTS ########################################
 import pandas as pd
+import configparser
 from sklearn.preprocessing import OneHotEncoder
 
+#########################################################################################
+
+
+################################## Global Configurations ################################
+# Load configuration fileconfig["data"]["targets"]
+CONFIG_FILE_PATH = "mlflow/test.conf"
+
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE_PATH)
+DATASET_PATH = config["data"]["dataset_path"]
+TEST_DATASET_PATH = config["data"]["dataset_test_path"]
+DATASET_INDEX_FEATURE = config["data"]["dataset_index"]
+DATASET_TARGET_FEATURES = ["h1n1_vaccine", "seasonal_vaccine"]
+
+#########################################################################################
 class Dataset:
+    '''
+    ## Dataset
+    
+    This class represents a dataset. It handles dataset loading and splitting.
+    
+    ### Attributes
+    
+    - test: The test dataset.
+    
+    '''
     def __init__(self):
-        data = pd.read_csv("../data/df_encoded.csv")
-        target = ["h1n1_vaccine","seasonal_vaccine"]
-        data.set_index("respondent_id", inplace=True)
+        '''
+        Constructor for the Dataset class.
+        '''
+        data = pd.read_csv(DATASET_PATH)
+        target = DATASET_TARGET_FEATURES
+        data.set_index(DATASET_INDEX_FEATURE, inplace=True)
         self._y = data[target]
         self._X = data.drop(columns=target)
-        test_data =  pd.read_csv("../data/test_encoded.csv")
-        test_data.set_index("respondent_id", inplace=True)
+        test_data =  pd.read_csv(TEST_DATASET_PATH)
+        test_data.set_index(DATASET_INDEX_FEATURE, inplace=True)
         self.test = test_data
     
     def with_correlation(self):
+        '''
+        ## with_correlation
+        Method that returns a copy of the dataset features and targets.
+        
+        ### Returns
+        (X, y): A tuple containing the dataset features and targets.
+        '''
+        
         return self._X.copy(), self._y.copy()
-    
 
     def with_onehot(self):
+        '''
+        ## with_onehot
+        Method that returns a copy of the dataset features and targets with one-hot encoding.
+
+        ### Returns
+        (X, y, test): A tuple containing the dataset features, targets and test dataset with one-hot encoding.
+        '''
         encoder = OneHotEncoder()
         all_features = pd.concat([self._X, self.test])
         encoder.fit(all_features)
@@ -27,6 +73,13 @@ class Dataset:
         return X, y, test_df
     
     def with_division(self):
+        ''''
+        ## with_division
+        Method that returns a tuple containing the dataset features and targets divided into two datasets, one for each target.
+        
+        ### Returns
+        ((h1n1, h1n1_y, test_h1n1), (seasonal, seasonal_y, test_seasonal)): A tuple containing two tuples, each containing the dataset features, targets and test dataset for each target.'''
+        
         h1_n1 = self._X.copy()
         seasonal = self._X.copy()
         h1_columns = ['doctor_recc_seasonal','opinion_seas_vacc_effective','opinion_seas_risk','opinion_seas_sick_from_vacc']
