@@ -1,9 +1,0 @@
-ipykernel==6.29.5
-ucimlrepo==0.0.7
-seaborn==0.13.2
-matplotlib==3.9.2
-scikit-learn==1.5.2
-pandas==2.2.3
-numpy==1.26.4
-pygam==0.9.1
-pydot==3.0.2
