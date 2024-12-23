@@ -15,7 +15,6 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILE_PATH)
 DATASET_PATH = config["data"]["dataset_path"]
 TEST_DATASET_PATH = config["data"]["dataset_test_path"]
-print(DATASET_PATH)
 DATASET_INDEX_FEATURE = config["data"]["dataset_index"]
 DATASET_TARGET_FEATURES = ["h1n1_vaccine", "seasonal_vaccine"]
 
