@@ -14,6 +14,46 @@ from sklearn.metrics import (
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from create_dataset import Dataset
 
+def extract_keras_params(model, compile_params=None, fit_params=None):
+    """
+    ## extract_keras_params
+    Extracts relevant parameters from a keras model, optimizer and compile
+    parameters, and fit parameters.
+
+    Args:
+        model: The keras model
+        compile_params: The compile parameters (although they are in another class, it would be good to save them)
+        fit_params: The fit parameters
+
+    Returns:
+        dict: The extracted parameters
+    """
+    params = {}
+
+    params["num_layers"] = len(model.layers)
+    for i, layer in enumerate(model.layers):
+        layer_config = layer.get_config()
+        params[f"layer_{i}_type"] = layer.__class__.__name__
+        params[f"layer_{i}_units"] = layer_config.get("units", None)
+        params[f"layer_{i}_activation"] = layer_config.get("activation", None)
+        params[f"layer_{i}_dropout_rate"] = layer_config.get("rate", None)
+
+    if compile_params is None:
+        optimizer_config = model.optimizer.get_config()
+        params.update({
+            "optimizer": optimizer_config["name"],
+            "learning_rate": optimizer_config.get("learning_rate"),
+            "loss_function": model.loss,
+        })
+    else:
+        params.update(compile_params)
+
+    # Fit params
+    if fit_params is not None:
+        params.update(fit_params)
+
+    return params
+
 
 def play_model(model, model_name, X, y, output):
     """
@@ -29,11 +69,21 @@ def play_model(model, model_name, X, y, output):
         output: Test data
     """
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=42
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
-
+    early_stopping = kr.callbacks.EarlyStopping( # to improve the performance of the model
+    monitor="val_auc", 
+    patience=10, 
+    restore_best_weights=True
+    )
     with mlflow.start_run():
-        model.fit(X_train, y_train)
+        fit_params = {
+            "batch_size": 64, # change this to try different tests
+            "epochs": 100,
+            "shuffle": True,
+        }
+        model.fit(X_train, y_train, validation_data=(X_test, y_test), 
+                  callbacks=[early_stopping], **fit_params)
         logging.info(f"Model trained")
         model.compute_metrics(X_test, y_test, model.predict(X_test))
         accuracy = model.get_metrics_result()["accuracy"]
@@ -47,6 +97,10 @@ def play_model(model, model_name, X, y, output):
 
         # mlflow.log_params(model.get_params())
         mlflow.log_input(pd_dataset, "training")
+        
+
+        params = extract_keras_params(model, fit_params=fit_params)
+        mlflow.log_params(params)
 
         mlflow.log_metric("roc_auc", float(roc_auc))
         mlflow.log_metric("accuracy", float(accuracy))
@@ -57,11 +111,9 @@ def play_model(model, model_name, X, y, output):
 
         signature = infer_signature(X_train, model.predict(X_train))
 
-        model_info = mlflow.sklearn.log_model(
-            sk_model=model,
+        model_info = mlflow.keras.log_model(
+            model,
             artifact_path="model",
-            signature=signature,
-            input_example=X_train,
             registered_model_name=model_name,
         )
         logging.info("model saved")
@@ -115,7 +167,7 @@ def play_model_search(model, model_name, X, y, output, param_d):
             param_distributions=param_d,
             n_iter=5,
             cv=5,
-            n_jobs=9,
+            n_jobs=-1,
             verbose=0,
             scoring="roc_auc",
         )
