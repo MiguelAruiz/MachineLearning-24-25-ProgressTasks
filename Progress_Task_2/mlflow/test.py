@@ -10,7 +10,7 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from create_dataset import Dataset
-from sklearn.metrics import roc_auc_score, accuracy_score
+from sklearn.metrics import roc_auc_score, accuracy_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multioutput import MultiOutputClassifier
 import logging
@@ -21,21 +21,22 @@ def hyperparameters(model_to_train):
                 'estimator__n_estimators': randint(50, 200),
                 'estimator__max_depth': [None, 10, 20, 30],
                 'estimator__min_samples_split': randint(2, 11),
-                'estimator__min_samples_leaf': randint(1, 5)
+                'estimator__min_samples_leaf': randint(1, 5),
+                'estimator__criterion': ['gini', 'entropy']
     }
     model = RandomizedSearchCV(estimator=model_to_train, param_distributions=param_dist_random,
-                                    n_iter=50, cv=5, n_jobs=-1, verbose=0,
+                                    n_iter=100, cv=5, n_jobs=-1, verbose=2,
                                     scoring='roc_auc')
     logging.info("Optimizing hyperparameters")
     return model
 
 
 def play_model(model, model_name, X, y, output):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
     with mlflow.start_run():
-        if model_name.endswith("si_opt"):
-           model = hyperparameters(model)
+        model = hyperparameters(model)
+
 
         model.fit(X_train, y_train)
         logging.info(f"Model trained")
@@ -43,17 +44,19 @@ def play_model(model, model_name, X, y, output):
 
         accuracy = accuracy_score(y_test, y_pred)
         roc_auc = roc_auc_score(y_test, y_pred, average="macro")
+        f1 = f1_score(y_test, y_pred, average="macro")
         logging.info("Model evaluated")
         
         pd_train = pd.concat([X_train, y_train], axis=1)
         pd_dataset = mlflow.data.pandas_dataset.from_pandas(pd_train, 
                                                             source = "df_encoded.csv", name="whole dataset and correlation")
         
-        mlflow.log_params(model.get_params())
+        mlflow.log_params(model.best_estimator_.get_params())
         mlflow.log_input(pd_dataset, "training")
 
         mlflow.log_metric("roc_auc", float(roc_auc))
         mlflow.log_metric("accuracy", float(accuracy))
+        mlflow.log_metric("f1", float(f1))
 
         mlflow.set_tag("Objective", "Compare multiple models with dataset with correlation")
 
@@ -86,20 +89,19 @@ def play_model(model, model_name, X, y, output):
 def main():
     # Set our tracking server uri for logging
     mlflow.set_tracking_uri(uri="http://127.0.0.1:8080")
-    experiment_name = "Whole dataset + correlation"
+    experiment_name = "RandomForest + whole dataset and correlation"
     if not mlflow.get_experiment_by_name(experiment_name):
         mlflow.create_experiment(experiment_name)
     # Create a new MLflow Experiment
     mlflow.set_experiment(experiment_name)
     logging.info("fetching data")
     data = Dataset()
-    X, y = data.with_correlation()
-    output = data.test
+    X, y, output = data.with_correlation()
     logging.info("Data fetched")
     # Split the data
     # models = {'RandomForest_no_opt': MultiOutputClassifier(RandomForestClassifier(n_estimators=100, random_state=42), n_jobs=-1), 
     #           'RandomForest_si_opt': MultiOutputClassifier(RandomForestClassifier(random_state=42), n_jobs=-1)}
-    models = {'RandomForest_si_opt': MultiOutputClassifier(RandomForestClassifier(), n_jobs=-1)}
+    models = {'RandomForest': MultiOutputClassifier(RandomForestClassifier(warm_start = False), n_jobs=-1)}
 
     for model_name, model in models.items():
         logging.info(f"Starting run with {model_name}")

@@ -9,8 +9,7 @@ class Dataset:
         self._X = data.drop(columns=target)
         test_data =  pd.read_csv("../data/test_encoded.csv")
         test_data.set_index("respondent_id", inplace=True)
-        self.test = test_data
+        self._test = test_data
     
     def with_correlation(self):
-        return self._X.copy(), self._y.copy()
-    
+        return self._X.copy(), self._y.copy(), self._test.copy()
