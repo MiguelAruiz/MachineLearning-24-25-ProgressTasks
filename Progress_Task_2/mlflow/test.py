@@ -20,6 +20,7 @@ from sklearn.model_selection import train_test_split
 from create_dataset import Dataset
 from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.multioutput import MultiOutputClassifier
 import logging
 import configparser
@@ -52,6 +53,9 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%H:%M:%S' 
 )
+tuner_logger = logging.Logger("[Tuner]")
+run_logger = logging.Logger("[Run]")
+logger_main = logging.Logger("[Main]",level=logging.DEBUG)
 
 #########################################################################################
 
@@ -68,7 +72,7 @@ def hyperparameters(model_to_train):
     
     '''
     
-    tuner_logger = logging.Logger("[Tuner]")
+
     
     param_dist_random = {
                 'estimator__n_estimators': randint(50, 200),
@@ -100,8 +104,6 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
     
     :return None: This method saves the predictions for the testing in a file within the `mlflow` directory.
     '''
-    
-    run_logger = logging.Logger("[Run]")
         
     # Split the dataset into train and testing
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
@@ -188,6 +190,7 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
 
 
 def main():
+    
     # Set our tracking server uri for logging
     mlflow.set_tracking_uri(uri=MLFLOW_LOCATION)
     experiment_name = CONFIG_PARAM_EXPERIMENT_NAME
@@ -195,20 +198,21 @@ def main():
         mlflow.create_experiment(experiment_name)
     # Create a new MLflow Experiment
     mlflow.set_experiment(experiment_name)
-    logging.info("fetching data")
+    logger_main.info("fetching data")
     data = Dataset()
     X, y = data.with_correlation()
     output = data.test
-    logging.info("Data fetched")
+    print(f"Showing the number of null values for the training data:\n {X.isnull().sum()}")
+    print(f"Showing the number of null values for the test data:\n {output.isnull().sum()}")
     # Split the data
     # models = {'RandomForest_no_opt': MultiOutputClassifier(RandomForestClassifier(n_estimators=100, random_state=42), n_jobs=-1), 
     #           'RandomForest_si_opt': MultiOutputClassifier(RandomForestClassifier(random_state=42), n_jobs=-1)}
     models = {
-        f"{config[CONFIG_SECTION_NAMES]['randomforest_model_name']}{OPTIMIZED_SUFFIX}": MultiOutputClassifier(RandomForestClassifier(), n_jobs=-1)
+        f"{config[CONFIG_SECTION_NAMES]['knn_model_name']}": MultiOutputClassifier(KNeighborsClassifier(n_neighbors=5, weights='distance'), n_jobs=-1),
         }
 
     for model_name, model in models.items():
-        logging.info(f"Starting run with {model_name}")
+        logger_main.info(f"Starting run with {model_name}")
         play_model(model, model_name, X, y, output)
 
 if __name__ == "__main__":

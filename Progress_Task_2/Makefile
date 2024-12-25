@@ -30,6 +30,6 @@ clean:
 	$(CLEAN) $(OUTPUT_FILE)
 
 install:
-	$(INSTALL_COMMAND) $(INSTALL_FROM_REQUIREMENTS)
+	$(INSTALL_COMMAND) $(INSTALL_FROM_REQUIREMENTS) > /dev/null
 
 .PHONY: all clean mlflow
