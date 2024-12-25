@@ -144,3 +144,18 @@ class Dataset:
         test_transformed = encoder.transform(self.test)
         test_df = pd.DataFrame(test_transformed.toarray(), index=self.test.index)
         return X, y, test_df
+    
+    def all_onehot(self):
+        
+        X = pd.read_csv('../data/df_encoded_all.csv', index_col="respondent_id")
+        target = ["h1n1_vaccine","seasonal_vaccine"]
+        y = X[target]
+        X = X.drop(columns=target)
+        encoder = OneHotEncoder()
+        all_features = pd.concat([X, self.test])
+        encoder.fit(all_features)
+        encoder.fit(X)
+        X = encoder.transform(X)
+        test_transformed = encoder.transform(self.test)
+        test_df = pd.DataFrame(test_transformed.toarray(), index=self.test.index)
+        return X, y, test_df
