@@ -123,3 +123,24 @@ class Dataset:
         y = X[target]
         X = X.drop(columns=target)
         return X, y, self.test.copy()
+
+    def no_outliers_onehot(self):
+        '''
+        ## no_outliers_onehot
+        Method that returns the dataset encoded with all the features removing some outliers and one-hot encoding.
+
+        ### Returns
+        X, y, test
+        '''
+        X = pd.read_csv('../data/df_encoded_no_outliers.csv', index_col="respondent_id")
+        target = ["h1n1_vaccine","seasonal_vaccine"]
+        y = X[target]
+        X = X.drop(columns=target)
+        encoder = OneHotEncoder()
+        all_features = pd.concat([X, self.test])
+        encoder.fit(all_features)
+        encoder.fit(X)
+        X = encoder.transform(X)
+        test_transformed = encoder.transform(self.test)
+        test_df = pd.DataFrame(test_transformed.toarray(), index=self.test.index)
+        return X, y, test_df
