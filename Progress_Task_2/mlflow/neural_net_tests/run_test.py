@@ -14,7 +14,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from create_dataset import Dataset
 
-def extract_keras_params(model, compile_params=None, fit_params=None):
+def extract_keras_params(model:kr.Model, compile_params=None, fit_params=None):
     """
     ## extract_keras_params
     Extracts relevant parameters from a keras model, optimizer and compile
@@ -55,7 +55,7 @@ def extract_keras_params(model, compile_params=None, fit_params=None):
     return params
 
 
-def play_model(model, model_name, X, y, output):
+def play_model(model:kr.Model, model_name,fit_params, X, y, output):
     """
     ## play_model
     Run the mlflow test with the model, and data. This version is for a normal
@@ -77,11 +77,6 @@ def play_model(model, model_name, X, y, output):
     restore_best_weights=True
     )
     with mlflow.start_run():
-        fit_params = {
-            "batch_size": 64, # change this to try different tests
-            "epochs": 100,
-            "shuffle": True,
-        }
         model.fit(X_train, y_train, validation_data=(X_test, y_test), 
                   callbacks=[early_stopping], **fit_params)
         logging.info(f"Model trained")
@@ -140,7 +135,7 @@ def play_model(model, model_name, X, y, output):
         logging.info("predictions saved")
 
 
-def play_model_search(model, model_name, X, y, output, param_d):
+def play_model_search(model, model_name,fit_params, X, y, output, param_d):
     """
     ## play_model
     Run the mlflow test with the model, and data. This version is for random
@@ -157,14 +152,14 @@ def play_model_search(model, model_name, X, y, output, param_d):
         X, y, test_size=0.3, random_state=42
     )
     with mlflow.start_run():
-        param_d |= {
+        model_params = param_d | {
             "input_shape": [X.shape[1]],
             "output_shape": [y.shape[1]],
         }
 
         model = RandomizedSearchCV(
             estimator=model,
-            param_distributions=param_d,
+            param_distributions=model_params,
             n_iter=5,
             cv=5,
             n_jobs=-1,
@@ -172,7 +167,7 @@ def play_model_search(model, model_name, X, y, output, param_d):
             scoring="roc_auc",
         )
 
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train, **fit_params)
         logging.info(f"Model trained")
         y_pred = model.predict(X_test)
 
@@ -185,9 +180,12 @@ def play_model_search(model, model_name, X, y, output, param_d):
             pd_train, source="df_encoded.csv", name="whole dataset and correlation"
         )
 
-        mlflow.log_params(model.best_estimator_.get_params())
+        # mlflow.log_params(model.best_estimator_.get_params())
         mlflow.log_input(pd_dataset, "training")
 
+        params = extract_keras_params(model.best_estimator_.model, fit_params=fit_params)
+        mlflow.log_params(params)
+        
         mlflow.log_metric("roc_auc", float(roc_auc))
         mlflow.log_metric("accuracy", float(accuracy))
 
@@ -230,6 +228,7 @@ def run_test(
     d: Dataset,
     NAME: str,
     gen_model: Callable[[int, int], kr.Model | KerasClassifier],
+    FIT_PARAMS: dict[str,Any],
     PARAMS: dict[str, Any] | None = None,
 ):
     """
@@ -251,6 +250,6 @@ def run_test(
     X, y = d.with_correlation()
     m: kr.Model = gen_model(len(X.columns), len(y.columns))
     if not NAME.endswith("si_opt"):
-        play_model(m, NAME, X, y, d.test)
+        play_model(m, NAME,FIT_PARAMS, X, y, d.test)
     else:
-        play_model_search(m, NAME, X, y, d.test, PARAMS)
+        play_model_search(m, NAME,FIT_PARAMS, X, y, d.test, PARAMS)

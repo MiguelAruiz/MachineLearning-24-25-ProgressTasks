@@ -6,6 +6,11 @@ import keras as kr
 
 NAME: str = "nn_3"
 
+FIT_PARAMS = {
+    "batch_size": 64, # change this to try different tests
+    "epochs": 100,
+    "shuffle": True,
+}
 
 def gen_model(n_features: int, n_targets: int) -> kr.Model:
     """
