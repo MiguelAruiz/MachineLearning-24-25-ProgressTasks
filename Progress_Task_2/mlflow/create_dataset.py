@@ -93,3 +93,32 @@ class Dataset:
         test_h1_n1.drop(columns=h1_columns, inplace=True)
         test_seasonal.drop(columns=seasonal_columns, inplace=True)
         return (h1_n1, h1_n1_y, test_h1_n1), (seasonal, seasonal_y, test_seasonal)
+
+    def all_features(self):
+        '''
+        ## all_features
+        Method that returns the dataset encoded with all the features without dropping the ones with random values.
+
+        ### Returns
+        X, y, test
+        '''
+        X = pd.read_csv('../data/df_encoded_all.csv', index_col="respondent_id")
+        target = ["h1n1_vaccine","seasonal_vaccine"]
+        y = X[target]
+        X = X.drop(columns=target)
+        test = pd.read_csv('../data/df_encoded_all.csv', index_col="respondent_id")
+        return X, y, test
+    
+    def no_outliers(self):
+        '''
+        ## no_outliers
+        Method that returns the dataset encoded with all the features removing some outliers.
+
+        ### Returns
+        X, y, test
+        '''
+        X = pd.read_csv('../data/df_encoded_no_outliers.csv', index_col="respondent_id")
+        target = ["h1n1_vaccine","seasonal_vaccine"]
+        y = X[target]
+        X = X.drop(columns=target)
+        return X, y, self.test.copy()
