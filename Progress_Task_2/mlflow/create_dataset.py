@@ -3,6 +3,7 @@
 ######################################## IMPORTS ########################################
 import pandas as pd
 import configparser
+from sklearn.preprocessing import OneHotEncoder
 
 #########################################################################################
 
@@ -15,6 +16,7 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILE_PATH)
 DATASET_PATH = config["data"]["dataset_path"]
 TEST_DATASET_PATH = config["data"]["dataset_test_path"]
+print(DATASET_PATH)
 DATASET_INDEX_FEATURE = config["data"]["dataset_index"]
 DATASET_TARGET_FEATURES = ["h1n1_vaccine", "seasonal_vaccine"]
 
@@ -53,4 +55,71 @@ class Dataset:
         '''
         
         return self._X.copy(), self._y.copy()
+
+    def with_onehot(self):
+        '''
+        ## with_onehot
+        Method that returns a copy of the dataset features and targets with one-hot encoding.
+
+        ### Returns
+        (X, y, test): A tuple containing the dataset features, targets and test dataset with one-hot encoding.
+        '''
+        encoder = OneHotEncoder()
+        all_features = pd.concat([self._X, self.test])
+        encoder.fit(all_features)
+        X = encoder.transform(self._X)
+        y = self._y
+        test_transformed = encoder.transform(self.test)
+        test_df = pd.DataFrame(test_transformed.toarray(), index=self.test.index)
+        return X, y, test_df
     
+    def with_division(self):
+        ''''
+        ## with_division
+        Method that returns a tuple containing the dataset features and targets divided into two datasets, one for each target.
+        
+        ### Returns
+        ((h1n1, h1n1_y, test_h1n1), (seasonal, seasonal_y, test_seasonal)): A tuple containing two tuples, each containing the dataset features, targets and test dataset for each target.'''
+        
+        h1_n1 = self._X.copy()
+        seasonal = self._X.copy()
+        h1_columns = ['doctor_recc_seasonal','opinion_seas_vacc_effective','opinion_seas_risk','opinion_seas_sick_from_vacc']
+        seasonal_columns = ['h1n1_concern','h1n1_knowledge','doctor_recc_h1n1','opinion_h1n1_vacc_effective','opinion_h1n1_risk','opinion_h1n1_sick_from_vacc']
+        h1_n1.drop(columns=h1_columns, inplace=True)
+        seasonal.drop(columns=seasonal_columns, inplace=True)
+        h1_n1_y = self._y['h1n1_vaccine']
+        seasonal_y = self._y['seasonal_vaccine']
+        test_h1_n1 = self.test.copy()
+        test_seasonal = self.test.copy()
+        test_h1_n1.drop(columns=h1_columns, inplace=True)
+        test_seasonal.drop(columns=seasonal_columns, inplace=True)
+        return (h1_n1, h1_n1_y, test_h1_n1), (seasonal, seasonal_y, test_seasonal)
+
+    def all_features(self):
+        '''
+        ## all_features
+        Method that returns the dataset encoded with all the features without dropping the ones with random values.
+
+        ### Returns
+        X, y, test
+        '''
+        X = pd.read_csv('../data/df_encoded_all.csv', index_col="respondent_id")
+        target = ["h1n1_vaccine","seasonal_vaccine"]
+        y = X[target]
+        X = X.drop(columns=target)
+        test = pd.read_csv('../data/df_encoded_all.csv', index_col="respondent_id")
+        return X, y, test
+    
+    def no_outliers(self):
+        '''
+        ## no_outliers
+        Method that returns the dataset encoded with all the features removing some outliers.
+
+        ### Returns
+        X, y, test
+        '''
+        X = pd.read_csv('../data/df_encoded_no_outliers.csv', index_col="respondent_id")
+        target = ["h1n1_vaccine","seasonal_vaccine"]
+        y = X[target]
+        X = X.drop(columns=target)
+        return X, y, self.test.copy()
