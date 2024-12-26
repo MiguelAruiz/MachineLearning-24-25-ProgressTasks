@@ -135,98 +135,11 @@ def play_model(model:kr.Model, model_name,fit_params, X, y, output):
         logging.info("predictions saved")
 
 
-def play_model_search(model, model_name,fit_params, X, y, output, param_d):
-    """
-    ## play_model
-    Run the mlflow test with the model, and data. This version is for random
-    search of a keras model
-
-    Args:
-        model: The keras model tested here.
-        model_name (str): The name of the model
-        X: Training data
-        y: Training data
-        output: Test data
-    """
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=42
-    )
-    with mlflow.start_run():
-        model_params = param_d | {
-            "input_shape": [X.shape[1]],
-            "output_shape": [y.shape[1]],
-        }
-
-        model = RandomizedSearchCV(
-            estimator=model,
-            param_distributions=model_params,
-            n_iter=5,
-            cv=5,
-            n_jobs=-1,
-            verbose=2,
-            scoring="roc_auc",
-        )
-
-        model.fit(X_train, y_train, **fit_params)
-        logging.info(f"Model trained")
-        y_pred = model.predict(X_test)
-
-        accuracy = accuracy_score(y_test, y_pred)
-        roc_auc = roc_auc_score(y_test, y_pred, average="macro")
-        logging.info("Model evaluated")
-
-        pd_train = pd.concat([X_train, y_train], axis=1)
-        pd_dataset = mlflow.data.pandas_dataset.from_pandas(
-            pd_train, source="df_encoded.csv", name="whole dataset and correlation"
-        )
-
-        mlflow.log_params(model.best_estimator_.get_params())
-        mlflow.log_input(pd_dataset, "training")
-
-        mlflow.log_metric("roc_auc", float(roc_auc))
-        mlflow.log_metric("accuracy", float(accuracy))
-
-        mlflow.set_tag(
-            "Objective", "Compare multiple models with dataset with correlation"
-        )
-
-        signature = infer_signature(X_train, model.predict(X_train))
-
-        model_info = mlflow.sklearn.log_model(
-            sk_model=model,
-            artifact_path="model",
-            signature=signature,
-            input_example=X_train,
-            registered_model_name=model_name,
-        )
-        logging.info("model saved")
-        predictions = model.predict_proba(output)
-
-        predictions = predictions.transpose()
-        h1n1_probs = predictions[0][:]
-        # Probabilidades de clase positiva para h1n1_vaccine
-        seasonal_probs = predictions[1][:]
-        # Probabilidades de clase positiva para seasonal_vaccine
-
-        predict = pd.DataFrame(
-            {
-                "respondent_id": output.index,
-                "h1n1_vaccine": h1n1_probs,
-                "seasonal_vaccine": seasonal_probs,
-            }
-        )
-        predict.set_index("respondent_id", inplace=True)
-        predict.to_csv(f"predictions_{model_name}.csv")
-        mlflow.log_artifact(f"predictions_{model_name}.csv")
-        logging.info("predictions saved")
-
-
 def run_test(
     d: Dataset,
     NAME: str,
     gen_model: Callable[[int, int], kr.Model | KerasClassifier],
     FIT_PARAMS: dict[str,Any],
-    PARAMS: dict[str, Any] | None = None,
 ):
     """
     ## run_test
@@ -246,7 +159,4 @@ def run_test(
     """
     X, y = d.with_correlation()
     m: kr.Model = gen_model(len(X.columns), len(y.columns))
-    if not NAME.endswith("si_opt"):
-        play_model(m, NAME,FIT_PARAMS, X, y, d.test)
-    else:
-        play_model_search(m, NAME,FIT_PARAMS, X, y, d.test, PARAMS)
+    play_model(m, NAME,FIT_PARAMS, X, y, d.test)

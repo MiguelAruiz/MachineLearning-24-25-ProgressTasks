@@ -4,7 +4,6 @@ from typing import Callable, Tuple
 import mlflow
 from . import test1
 from . import test2
-from . import test3
 
 from create_dataset import Dataset
 from .run_test import run_test
@@ -19,9 +18,9 @@ def main(argv: list[str] = []):
     d = Dataset()
     print("Running Tests...")
     print(f"Running test 1 (NN Model):")
-    run_test(d,test1.NAME,test1.gen_model)
-    print(f"Running test 2 (NN Model with random search):")
-    run_test(d,test2.NAME,test2.gen_model)
+    run_test(d,test1.NAME,test1.gen_model,test1.FIT_PARAMS)
+    print(f"Running test 2 (NN Model larger size with dropout in the middle):")
+    run_test(d,test2.NAME,test2.gen_model,test2.FIT_PARAMS)
     print("Run Finished.")
 
 
