@@ -163,7 +163,7 @@ def play_model_search(model, model_name,fit_params, X, y, output, param_d):
             n_iter=5,
             cv=5,
             n_jobs=-1,
-            verbose=0,
+            verbose=2,
             scoring="roc_auc",
         )
 
@@ -180,12 +180,9 @@ def play_model_search(model, model_name,fit_params, X, y, output, param_d):
             pd_train, source="df_encoded.csv", name="whole dataset and correlation"
         )
 
-        # mlflow.log_params(model.best_estimator_.get_params())
+        mlflow.log_params(model.best_estimator_.get_params())
         mlflow.log_input(pd_dataset, "training")
 
-        params = extract_keras_params(model.best_estimator_.model, fit_params=fit_params)
-        mlflow.log_params(params)
-        
         mlflow.log_metric("roc_auc", float(roc_auc))
         mlflow.log_metric("accuracy", float(accuracy))
 

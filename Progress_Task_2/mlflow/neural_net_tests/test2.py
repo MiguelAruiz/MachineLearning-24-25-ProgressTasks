@@ -15,14 +15,23 @@ PARAMS =  {
     # "l2": [0, 0.01, 0.003, 0.001, 0.0001],
     # "rs_num": [0.2,0.3,0.4],
     # neurons in each layer
-    "shape" : [(50,),(100,50,20,)],
-    "act": ["relu","tanh","logistic"],
+    "shape" : [
+        (50,),
+        (50, 25),
+        (100, 50, 20),
+        (100, 50, 25),
+        (100, 50, 25, 10),
+        (200, 100, 50, 25),
+        (200, 100, 50, 25, 10)
+    ],
+    "act": ["relu","tanh"],
     "learn_rate": uniform(0.0001,0.01),
     # "alpha": uniform(0.0001,0.01),
     # "max_iter": randint(200,1000),
 }
 FIT_PARAMS= {
     "epochs": 100,
+    "verbose": 0,
 }
 
 

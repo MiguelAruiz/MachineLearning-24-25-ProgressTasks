@@ -2,14 +2,14 @@ from types import ModuleType
 from typing import Callable, Tuple
 
 import mlflow
-import test1
-import test2
+from . import test1
+from . import test2
+from . import test3
 
 from create_dataset import Dataset
-from run_test import run_test
+from .run_test import run_test
 
 def main(argv: list[str] = []):
-    # FIXME duplicated code with Progress_Task_2/mlflow/test.py:89
     mlflow.set_tracking_uri(uri="http://127.0.0.1:8080")
     experiment_name = "Whole dataset + correlation"
     if not mlflow.get_experiment_by_name(experiment_name):
