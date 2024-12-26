@@ -40,7 +40,6 @@ def objective_vaccine(trial, target):
         'bagging_temperature': trial.suggest_float('bagging_temperature', 0, 1),
         'border_count': trial.suggest_int('border_count', 32, 255),
         'grow_policy': trial.suggest_categorical('grow_policy', ['SymmetricTree', 'Depthwise', 'Lossguide']),
-        'loss_function': trial.suggest_categorical('loss_function', ['Logloss', 'CrossEntropy']),
     }
 
     # Definir el objetivo según la columna
@@ -51,10 +50,18 @@ def objective_vaccine(trial, target):
     else:
         raise ValueError(f"Unknown target column: {target}")
     
+    class_majority = target_data.value_counts().max()  # Número de muestras en la clase mayoritaria
+    class_minority = target_data.value_counts().min()  # Número de muestras en la clase minoritaria
+
+    # Calcular los pesos de las clases
+    class_weight_majority = len(target_data) / (2 * class_majority)
+    class_weight_minority = len(target_data) / (2 * class_minority)
+
     model = CatBoostClassifier(
-        eval_metric='AUC',        
+        eval_metric='Logloss',        
         cat_features=[],
         train_dir='catboost_info',
+        class_weights=[class_weight_majority, class_weight_minority],    
         early_stopping_rounds=50, verbose=0, **param_dist_random         
     )
     # Inicializar StratifiedKFold para validación cruzada
@@ -95,14 +102,14 @@ print("Experimento creado")
 
 # mlflow_callback = MLflowCallback(tracking_uri=None, metric_name="auc", create_experiment=False, mlflow_kwargs={"experiment_name": experiment_name})
 study_s = optuna.create_study(directions=["maximize"])
-study_s.optimize(lambda trial: objective_vaccine(trial, target='seasonal_vaccine'), n_trials=100, show_progress_bar=True)
+study_s.optimize(lambda trial: objective_vaccine(trial, target='seasonal_vaccine'), n_trials=100, show_progress_bar=True, n_jobs=-1)
 
 print("Seasonal done")
 print(study_s.best_params)
 print(study_s.best_value)
 
 study_h1 = optuna.create_study(directions=["maximize"])
-study_h1.optimize(lambda trial: objective_vaccine(trial, target='h1n1_vaccine'), n_trials=100, show_progress_bar=True)  
+study_h1.optimize(lambda trial: objective_vaccine(trial, target='h1n1_vaccine'), n_trials=100, show_progress_bar=True, n_jobs = -1)  
 
 print("H1N1 done")
 print(study_h1.best_params)
