@@ -1,3 +1,7 @@
-mlflow
-scikit-learn
+mlflow==2.18.0
+scikit-learn==1.5.2
 pandas
+optuna==4.1.0
+optuna-integration==4.1.0
+catboost==1.2.7
+kneebow

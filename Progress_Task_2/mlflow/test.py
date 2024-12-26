@@ -18,8 +18,9 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from create_dataset import Dataset
-from sklearn.metrics import roc_auc_score, accuracy_score
+from sklearn.metrics import roc_auc_score, accuracy_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.multioutput import MultiOutputClassifier
 import logging
 import configparser
@@ -74,7 +75,8 @@ def hyperparameters(model_to_train):
                 'estimator__n_estimators': randint(50, 200),
                 'estimator__max_depth': [None, 10, 20, 30],
                 'estimator__min_samples_split': randint(2, 11),
-                'estimator__min_samples_leaf': randint(1, 5)
+                'estimator__min_samples_leaf': randint(1, 5),
+                'estimator__criterion': ['gini', 'entropy']
     }
     tuner_logger.info("Hyperparameters optimized. Building model...")
     model = RandomizedSearchCV(estimator=model_to_train, param_distributions=param_dist_random,
@@ -120,14 +122,14 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
         pd_train = pd.concat([X_train, y_train], axis=1)
         pd_dataset = mlflow.data.pandas_dataset.from_pandas(pd_train, 
                                                             source = "df_encoded.csv", name="whole dataset and correlation")
+        
+        mlflow.log_params(model.best_estimator_.get_params())
         mlflow.log_input(pd_dataset, "training")
                
         # Tune the hyperparameters of the model (if needed. Only for optimized models) and log them
         if model_name.endswith(OPTIMIZED_SUFFIX):
             run_logger.info(f"Model {model_name} is optimized. Tuning hyperparameters...")
             model = hyperparameters(model)
-        mlflow.log_params(model.get_params())           
-
 
         ########################## Training, testing and evaluation ######################
         
@@ -188,6 +190,7 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
 
 
 def main():
+    
     # Set our tracking server uri for logging
     mlflow.set_tracking_uri(uri=MLFLOW_LOCATION)
     experiment_name = CONFIG_PARAM_EXPERIMENT_NAME
@@ -200,9 +203,6 @@ def main():
     X, y = data.with_correlation()
     output = data.test
     logging.info("Data fetched")
-    # Split the data
-    # models = {'RandomForest_no_opt': MultiOutputClassifier(RandomForestClassifier(n_estimators=100, random_state=42), n_jobs=-1), 
-    #           'RandomForest_si_opt': MultiOutputClassifier(RandomForestClassifier(random_state=42), n_jobs=-1)}
     models = {
         f"{config[CONFIG_SECTION_NAMES]['randomforest_model_name']}{OPTIMIZED_SUFFIX}": MultiOutputClassifier(RandomForestClassifier(), n_jobs=-1)
         }
