@@ -4,3 +4,4 @@ pandas
 optuna==4.1.0
 optuna-integration==4.1.0
 catboost==1.2.7
+kneebow
