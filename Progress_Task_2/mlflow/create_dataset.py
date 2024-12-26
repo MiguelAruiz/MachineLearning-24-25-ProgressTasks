@@ -109,3 +109,18 @@ class Dataset:
         test_transformed = encoder.transform(test)
         test_df = pd.DataFrame(test_transformed.toarray(), index=test.index)
         return X, y, test_df
+    
+    def original_dataset(self):
+        '''
+        ## original_dataset
+        Method that returns the original dataset without NaN values.
+
+        ### Returns
+        X, y, test
+        '''
+        X = pd.read_csv("../data/df_no_null.csv", index_col="respondent_id")
+        target = ["h1n1_vaccine","seasonal_vaccine"]
+        y = X[target]
+        X = X.drop(columns=target)
+        test = pd.read_csv("../data/test_no_null.csv", index_col="respondent_id")
+        return X, y, test
