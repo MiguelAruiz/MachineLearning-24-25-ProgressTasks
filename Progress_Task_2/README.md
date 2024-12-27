@@ -14,17 +14,16 @@ To install the required libraries, run the following command:
 pip install -r requirements.txt
 ```
 
-
 ## Structure
 
 ```
 📂 .    
     ├──── 📂 data
     ├──── 📂 mlflow
-    ├──── 📄 KNN.ipynb    
-    ├──── ⚙️ make.bat / Makefile    
-    ├──── 📄 KNN.ipynb    
-    ├──── 📄 MLPClassifier.ipynb
+    ├──── 📄 KNN.ipynb
+    ├──── 📄 MLPClassifier.ipynb    
+    ├──── ⚙️ make.bat / Makefile        
+    ├──── 📄 Model_Applications.ipynb
     ├──── 📄 Preprocessing.ipynb
     ├──── 📄 RandomForest.ipynb   
     ├────  ℹ️ README.md  
@@ -32,18 +31,22 @@ pip install -r requirements.txt
     └──── ⚙️ test.conf 
 ```
 
-* **data**: Contains the dataset used in the notebooks.
-* **mlflow**: Contains tests with the MLflow library.
-* **make.bat / Makefile**: Contains the commands to run the mlflow server.
+* 📂**data**: Contains the dataset used in the notebooks.
+* 📂**mlflow**: Contains tests with the MLflow library.
+* ⚙️**make.bat / Makefile**: Contains the commands to run the mlflow server.
 * **KNN.ipynb**: Contains the implementation of the K-Nearest Neighbors algorithm.
 * **MLPClassifier.ipynb**: Contains the implementation of the Multi-layer Perceptron Classifier algorithm.
+* ❗**Model_Applications.ipynb**: Contains the a summary of the task.
 * **Preprocessing.ipynb**: Contains the exploratory data analysis and the preprocessing of the dataset.
 * **RandomForest.ipynb**: Contains the implementation of the Random Forest algorithm.
+
+> [!IMPORTANT]  
+> Model_Applications.ipynb is the first notebook you should look at
 
 
 ## Explanation of the datasets
 
-| Nombre del fichero             | Descripción                          |
+| File name                      | Description                          |
 |--------------------------------|--------------------------------------|
 | df_encoded.csv                 | Dataset without features with random values (employment_industry) and encoded with OrdinalEncoder. **This is our first and main dataset**                   |
 | df_encoded_all.csv             | All features with OrdinalEncoder          |
