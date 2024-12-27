@@ -123,6 +123,7 @@ class Dataset:
         y = X[target]
         X = X.drop(columns=target)
         return X, y, self.test.copy()
+
     def no_outliers_onehot(self):
         '''
         ## no_outliers_onehot
