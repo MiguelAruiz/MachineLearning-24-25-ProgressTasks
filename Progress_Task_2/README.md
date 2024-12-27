@@ -6,6 +6,22 @@ The objective is to build a predictive model that estimates the likelihood of in
 
 All the information about the task is on the following site: [competition website](https://www.drivendata.org/competitions/66/flu-shot-learning/page/210/)
 
+### Ranking 🏅
+TEAM NAME: Gatopizza
+
+FINAL POSITION: 478th 
+
+SCORE: 0.8606
+
+MODEL: Catboost with Optuna
+
+## Important Note
+
+`Model_Applications.ipynb` contains a summary of the task. The other notebooks contain the code used to build each model and further explanations.  
+
+The experiment is not reproducible, this means that using our best parameters does not guarantee the same score.
+
+
 ## Installation
 
 To install the required libraries, run the following command:
@@ -20,13 +36,17 @@ pip install -r requirements.txt
 📂 .    
     ├──── 📂 data
     ├──── 📂 mlflow
+    ├──── 📄 Catboost.ipynb
     ├──── 📄 KNN.ipynb
+    ├──── 📄 LightGBM.ipynb
     ├──── 📄 MLPClassifier.ipynb    
     ├──── ⚙️ make.bat / Makefile        
     ├──── 📄 Model_Applications.ipynb
+    ├──── 📄 NeuralNetworks.ipynb
     ├──── 📄 Preprocessing.ipynb
     ├──── 📄 RandomForest.ipynb   
-    ├────  ℹ️ README.md  
+    ├────  ℹ️ README.md
+    ├──── 📄 competition_webscrapper.py  
     ├──── 📄 requirements.txt  
     └──── ⚙️ test.conf 
 ```
@@ -34,11 +54,9 @@ pip install -r requirements.txt
 * 📂**data**: Contains the dataset used in the notebooks.
 * 📂**mlflow**: Contains tests with the MLflow library.
 * ⚙️**make.bat / Makefile**: Contains the commands to run the mlflow server.
-* **KNN.ipynb**: Contains the implementation of the K-Nearest Neighbors algorithm.
-* **MLPClassifier.ipynb**: Contains the implementation of the Multi-layer Perceptron Classifier algorithm.
 * ❗**Model_Applications.ipynb**: Contains the a summary of the task.
 * **Preprocessing.ipynb**: Contains the exploratory data analysis and the preprocessing of the dataset.
-* **RandomForest.ipynb**: Contains the implementation of the Random Forest algorithm.
+* **competition_webscrapper.py**: Contains the code to get the ranking of the competition.
 
 > [!IMPORTANT]  
 > Model_Applications.ipynb is the first notebook you should look at
