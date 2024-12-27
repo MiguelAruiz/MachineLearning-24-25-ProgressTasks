@@ -21,7 +21,6 @@ from create_dataset import Dataset
 from neural_net_tests import main as nn_main
 from sklearn.metrics import roc_auc_score, accuracy_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.multioutput import MultiOutputClassifier
 import logging
 import configparser
@@ -191,9 +190,6 @@ def play_model(model, model_name : str, X : pd.DataFrame, y : pd.DataFrame, outp
 
 
 def main():
-    # HACK run neuralnettests from here
-    nn_main()
-    return
     
     # Set our tracking server uri for logging
     mlflow.set_tracking_uri(uri=MLFLOW_LOCATION)
