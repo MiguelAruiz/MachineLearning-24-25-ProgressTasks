@@ -21,6 +21,5 @@ Using a dataset of wine characteristics, the objective of this task is to select
 The objective is to build a predictive model that estimates the likelihood of individuals receiving two different vaccines: the H1N1 flu vaccine and the seasonal flu vaccine. This is a competition.
 
 [>>> Click here to access Progress Task Information <<<](Progress_Task_2/README.md)
-a
 
 ## Progress Task 3
