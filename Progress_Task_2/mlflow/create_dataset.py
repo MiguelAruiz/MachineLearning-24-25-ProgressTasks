@@ -123,7 +123,6 @@ class Dataset:
         y = X[target]
         X = X.drop(columns=target)
         return X, y, self.test.copy()
-
     def no_outliers_onehot(self):
         '''
         ## no_outliers_onehot
@@ -151,7 +150,23 @@ class Dataset:
         all_features = pd.concat([X, test])
         encoder.fit(all_features)
         encoder.fit(X)
-        X = encoder.transform(X)
-        test_transformed = encoder.transform(self.test)
-        test_df = pd.DataFrame(test_transformed.toarray(), index=self.test.index)
+        X_transformed = encoder.transform(X)
+        X_df = pd.DataFrame(X_transformed.toarray(), index=X.index)
+        test_transformed = encoder.transform(test)
+        test_df = pd.DataFrame(test_transformed.toarray(), index=test.index)
         return X, y, test_df
+    
+    def original_dataset(self):
+        '''
+        ## original_dataset
+        Method that returns the original dataset without NaN values.
+
+        ### Returns
+        X, y, test
+        '''
+        X = pd.read_csv(config["data"]["dataset_no_nulls_path"], index_col="respondent_id")
+        target = ["h1n1_vaccine","seasonal_vaccine"]
+        y = X[target]
+        X = X.drop(columns=target)
+        test = pd.read_csv(config["data"]["dataset_test_no_nulls_path"], index_col="respondent_id")
+        return X, y, test

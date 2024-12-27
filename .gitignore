@@ -2,5 +2,6 @@ __pycache__/
 .mypy_cache/
 mlruns/
 mlartifacts/
-.venv
+.venv/
 venv
+catboost_info/
