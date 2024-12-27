@@ -103,11 +103,11 @@ class Dataset:
         ### Returns
         X, y, test
         '''
-        X = pd.read_csv('../data/df_encoded_all.csv', index_col="respondent_id")
+        X = pd.read_csv(config["data"]["dataset_all_path"], index_col="respondent_id")
         target = ["h1n1_vaccine","seasonal_vaccine"]
         y = X[target]
         X = X.drop(columns=target)
-        test = pd.read_csv('../data/df_encoded_all.csv', index_col="respondent_id")
+        test = pd.read_csv(config["data"]["dataset_test_all_path"], index_col="respondent_id")
         return X, y, test
     
     def no_outliers(self):
@@ -118,7 +118,7 @@ class Dataset:
         ### Returns
         X, y, test
         '''
-        X = pd.read_csv('../data/df_encoded_no_outliers.csv', index_col="respondent_id")
+        X = pd.read_csv(config["data"]["dataset_no_outliers_path"], index_col="respondent_id")
         target = ["h1n1_vaccine","seasonal_vaccine"]
         y = X[target]
         X = X.drop(columns=target)
@@ -132,7 +132,7 @@ class Dataset:
         ### Returns
         X, y, test
         '''
-        X = pd.read_csv('../data/df_encoded_no_outliers.csv', index_col="respondent_id")
+        X = pd.read_csv(config["data"]["dataset_no_outliers_path"], index_col="respondent_id")
         target = ["h1n1_vaccine","seasonal_vaccine"]
         y = X[target]
         X = X.drop(columns=target)
@@ -146,13 +146,9 @@ class Dataset:
         return X, y, test_df
     
     def all_onehot(self):
-        
-        X = pd.read_csv('../data/df_encoded_all.csv', index_col="respondent_id")
-        target = ["h1n1_vaccine","seasonal_vaccine"]
-        y = X[target]
-        X = X.drop(columns=target)
+        X,y,test = self.all_features()
         encoder = OneHotEncoder()
-        all_features = pd.concat([X, self.test])
+        all_features = pd.concat([X, test])
         encoder.fit(all_features)
         encoder.fit(X)
         X = encoder.transform(X)
