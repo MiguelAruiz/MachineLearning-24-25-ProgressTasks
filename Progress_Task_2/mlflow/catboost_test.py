@@ -31,7 +31,7 @@ seasonal_test = y_test["seasonal_vaccine"]
 def objective_vaccine(trial, target):
 
     param_dist_random = {
-        'iterations': trial.suggest_int('iterations', 100, 3000),
+        'iterations': trial.suggest_int('iterations', 500, 5000),
         'depth': trial.suggest_int('depth', 4, 16),
         'learning_rate': trial.suggest_float('learning_rate', 0.001, 0.2, log=True),
         'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 1e-3, 10.0, log=True),
@@ -56,10 +56,9 @@ def objective_vaccine(trial, target):
         train_dir='catboost_whole',  
         early_stopping_rounds=5, verbose=0, **param_dist_random         
     )
-    # Inicializar StratifiedKFold para validación cruzada
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv = StratifiedKFold(n_splits=5, shuffle=True)
 
-    auc_scores = []  # Para almacenar AUC de cada pliegue
+    auc_scores = []  
     X_train.reset_index(drop=True, inplace=True)
     target_data.reset_index(drop=True, inplace=True)
 
@@ -67,13 +66,11 @@ def objective_vaccine(trial, target):
         X_train_fold, X_val_fold = X_train.iloc[train_index], X_train.iloc[val_index]
         y_train_fold, y_val_fold = target_data.iloc[train_index], target_data.iloc[val_index]
 
-        # Entrenar el modelo en cada pliegue
         model.fit(X_train_fold, y_train_fold, eval_set=(X_val_fold, y_val_fold), use_best_model=True)
 
         auc = model.get_best_score()['validation']['AUC']
         auc_scores.append(auc)
 
-    # Promediar las AUC de todos los pliegues
     mean_auc = np.mean(auc_scores)
 
     return float(mean_auc)
@@ -90,7 +87,7 @@ if __name__ == "__main__":
 
     ################ Start Optuna Seasonal vaccine ################
     storage = "sqlite:///optuna_study.db"
-    study_s = optuna.create_study(study_name="seasonal_T", direction="maximize", storage=storage, load_if_exists=True) 
+    study_s = optuna.create_study(study_name="seasonal_TT", direction="maximize", storage=storage, load_if_exists=True) 
     study_s.optimize(lambda trial: objective_vaccine(trial, target='seasonal_vaccine'), n_trials=50, show_progress_bar=True, n_jobs=1)
 
     print("Seasonal done")
@@ -98,7 +95,7 @@ if __name__ == "__main__":
     print(study_s.best_value)
 
     ################ Start Optuna h1n1 vaccine ################
-    study_h1 = optuna.create_study(study_name="h1n1_T", direction="maximize", storage=storage, load_if_exists=True)
+    study_h1 = optuna.create_study(study_name="h1n1_TT", direction="maximize", storage=storage, load_if_exists=True)
     study_h1.optimize(lambda trial: objective_vaccine(trial, target='h1n1_vaccine'), n_trials=50, show_progress_bar=True, n_jobs = 1)  
 
     print("H1N1 done")
@@ -113,7 +110,9 @@ if __name__ == "__main__":
         
     mlflow.log_metric("h1_best_auc", float(study_h1.best_value))
     mlflow.log_metric("s_best_auc", float(study_s.best_value))
-    mlflow.log_metric("roc_auc", float((study_h1.best_value + study_s.best_value)/2))
+    mlflow.log_metric("roc_auc_train", float((study_h1.best_value + study_s.best_value)/2))
+    # extract predictions
+
 
     ###### Train on best parameters ######
     model0 = CatBoostClassifier(
@@ -129,14 +128,23 @@ if __name__ == "__main__":
         early_stopping_rounds=5, verbose=0, **study_s.best_params         
     )
 
-    model0.fit(X_train, h1_train, early_stopping_rounds=50, verbose=100)
-    model1.fit(X_train, seasonal_train, early_stopping_rounds=50, verbose=100)
+    model0.fit(X_train, h1_train, early_stopping_rounds=5, verbose=100)
+    model1.fit(X_train, seasonal_train, early_stopping_rounds=5, verbose=100)
 
-    signature0 = infer_signature(X_train, model0.predict(X_train))
-    signature1 = infer_signature(X_train, model1.predict(X_train))
-    mlflow.catboost.log_model(model0, "model0", signature=signature0)
-    mlflow.catboost.log_model(model1, "model1", signature=signature1)
+    # signature0 = infer_signature(X_train, model0.predict(X_train))
+    # signature1 = infer_signature(X_train, model1.predict(X_train))
+    mlflow.catboost.log_model(model0, "model0" )
+    mlflow.catboost.log_model(model1, "model1")
     print("model saved")
+    y_pred0 = model0.predict(X_test)
+    y_pred1 = model1.predict(X_test)
+    y_pred_prob0 = model0.predict_proba(X_test)
+    y_pred_prob1 = model1.predict_proba(X_test)
+    y_pred = np.column_stack([y_pred0, y_pred1])
+    accuracy = accuracy_score(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred, average="macro")
+    mlflow.log_metric("accuracy", float(accuracy))
+    mlflow.log_metric("roc_auc", float(roc_auc))
 
     ################ Predictions ################
     predictions0 = model0.predict_proba(output)
