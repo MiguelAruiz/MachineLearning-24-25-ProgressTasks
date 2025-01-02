@@ -1,0 +1,4 @@
+wordcloud==1.9.4
+pandas
+seaborn==0.13.2
+nltk==3.9.1
