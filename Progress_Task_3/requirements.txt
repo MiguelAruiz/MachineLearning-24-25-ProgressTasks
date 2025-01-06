@@ -4,7 +4,7 @@ seaborn==0.13.2
 nltk==3.9.1
 scikit-learn==1.5.2
 html5lib
-sentence-transformers
+transformers
 bertopic
 datamapplot
 umap-learn
