@@ -3,3 +3,5 @@ pandas
 seaborn==0.13.2
 nltk==3.9.1
 scikit-learn==1.5.2
+svgling==0.5.0
+parallel-pandas==0.6.4
