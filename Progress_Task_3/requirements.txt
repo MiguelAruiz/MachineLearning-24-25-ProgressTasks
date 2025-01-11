@@ -8,4 +8,4 @@ transformers
 bertopic
 datamapplot
 umap-learn
-dask[dataframe]
+dask[dataframe] 
