@@ -6,9 +6,10 @@ scikit-learn==1.5.2
 svgling==0.5.0
 parallel-pandas==0.6.4
 textstat==0.7.4
+shap==0.46.0
 html5lib
 transformers
 bertopic
 datamapplot
 umap-learn
-dask[dataframe] 
+dask[dataframe]
